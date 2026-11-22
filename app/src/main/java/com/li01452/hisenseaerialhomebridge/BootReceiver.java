@@ -13,7 +13,7 @@ public final class BootReceiver extends BroadcastReceiver {
     private static final String LOCKED_BOOT =
             "android.intent.action.LOCKED_BOOT_COMPLETED";
 
-    private static long lastHandledElapsed = 0L;
+    private static long lastLaunchBroadcastElapsed = 0L;
 
     @Override
     public synchronized void onReceive(Context context, Intent intent) {
@@ -32,13 +32,15 @@ public final class BootReceiver extends BroadcastReceiver {
         }
 
         long now = SystemClock.elapsedRealtime();
-        if (lastHandledElapsed > 0L
-                && now >= lastHandledElapsed
-                && now - lastHandledElapsed < 8000L) {
-            Log.i(TAG, "Ignoring duplicate boot broadcast: " + action);
-            return;
+        if (!lockedBoot) {
+            if (lastLaunchBroadcastElapsed > 0L
+                    && now >= lastLaunchBroadcastElapsed
+                    && now - lastLaunchBroadcastElapsed < 20000L) {
+                Log.i(TAG, "Ignoring duplicate launch broadcast: " + action);
+                return;
+            }
+            lastLaunchBroadcastElapsed = now;
         }
-        lastHandledElapsed = now;
 
         Log.i(TAG, "Received boot broadcast: " + action);
 
