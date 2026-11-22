@@ -10,6 +10,8 @@ public final class BootReceiver extends BroadcastReceiver {
     private static final String TAG = "HisenseBootBridge";
     private static final String HISENSE_BOOT =
             "android.intent.action.HISENSE_BOOT_COMPLETED";
+    private static final String LOCKED_BOOT =
+            "android.intent.action.LOCKED_BOOT_COMPLETED";
 
     private static long lastHandledElapsed = 0L;
 
@@ -21,7 +23,7 @@ public final class BootReceiver extends BroadcastReceiver {
 
         final String action = intent.getAction();
         final boolean lockedBoot =
-                Intent.ACTION_LOCKED_BOOT_COMPLETED.equals(action);
+                LOCKED_BOOT.equals(action);
 
         if (!Intent.ACTION_BOOT_COMPLETED.equals(action)
                 && !lockedBoot
