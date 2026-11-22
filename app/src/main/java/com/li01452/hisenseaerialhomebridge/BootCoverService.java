@@ -25,6 +25,7 @@ public final class BootCoverService extends Service {
 
     public static final String EXTRA_ACTION = "boot_action";
     public static final String EXTRA_LAUNCH_AERIAL = "launch_aerial";
+    public static final String EXTRA_MANUAL_TEST = "manual_test";
 
     private static long lastAerialLaunchElapsed = 0L;
 
@@ -41,13 +42,16 @@ public final class BootCoverService extends Service {
                 : intent.getStringExtra(EXTRA_ACTION);
         boolean launchAerial = intent != null
                 && intent.getBooleanExtra(EXTRA_LAUNCH_AERIAL, false);
+        boolean manualTest = intent != null
+                && intent.getBooleanExtra(EXTRA_MANUAL_TEST, false);
 
         Log.i(TAG, "Cover service started. action=" + action
-                + ", launchAerial=" + launchAerial);
+                + ", launchAerial=" + launchAerial
+                + ", manualTest=" + manualTest);
 
         if (coverView == null && !showOverlay(action, launchAerial)) {
-            if (launchAerial) {
-                startFallbackActivity(action);
+            if (launchAerial || manualTest) {
+                startFallbackActivity(action, launchAerial);
             }
             stopSelf(startId);
             return START_NOT_STICKY;
@@ -60,7 +64,16 @@ public final class BootCoverService extends Service {
             handler.removeCallbacks(pendingRemoval);
         }
 
-        if (launchAerial) {
+        if (manualTest) {
+            pendingRemoval = new Runnable() {
+                @Override
+                public void run() {
+                    removeOverlay();
+                    stopSelf();
+                }
+            };
+            handler.postDelayed(pendingRemoval, 4000L);
+        } else if (launchAerial) {
             pendingLaunch = new Runnable() {
                 @Override
                 public void run() {
@@ -199,10 +212,10 @@ public final class BootCoverService extends Service {
         }
     }
 
-    private void startFallbackActivity(String action) {
+    private void startFallbackActivity(String action, boolean autoLaunch) {
         Intent fallback = new Intent(this, LogoActivity.class);
         fallback.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-        fallback.putExtra(LogoActivity.EXTRA_AUTO_LAUNCH, true);
+        fallback.putExtra(LogoActivity.EXTRA_AUTO_LAUNCH, autoLaunch);
         fallback.putExtra(LogoActivity.EXTRA_SOURCE, action);
         try {
             startActivity(fallback);
