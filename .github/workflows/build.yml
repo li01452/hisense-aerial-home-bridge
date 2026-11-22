@@ -1,0 +1,71 @@
+name: Build and publish APK
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.9'
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Install Android SDK packages
+        run: |
+          yes | sdkmanager --licenses
+          sdkmanager "platforms;android-35" "build-tools;35.0.0"
+
+      - name: Build release APK
+        run: |
+          gradle --no-daemon clean assembleRelease
+          mkdir -p dist
+          cp app/build/outputs/apk/release/app-release.apk dist/hisense-aerial-home-bridge-v0.1.0-test1.apk
+          sha256sum dist/hisense-aerial-home-bridge-v0.1.0-test1.apk | tee dist/SHA256SUMS.txt
+          du -h dist/hisense-aerial-home-bridge-v0.1.0-test1.apk
+
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: hisense-aerial-home-bridge-v0.1.0-test1
+          path: dist/*
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Publish test release
+        if: github.ref == 'refs/heads/main'
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v0.1.0-test1
+          name: v0.1.0-test1 测试版
+          target_commitish: main
+          prerelease: true
+          draft: false
+          make_latest: false
+          overwrite_files: true
+          fail_on_unmatched_files: true
+          files: |
+            dist/hisense-aerial-home-bridge-v0.1.0-test1.apk
+            dist/SHA256SUMS.txt
+          body: |
+            首个测试版本。用于验证海信私有开机广播、Android 标准开机广播、Logo 遮罩和 Aerial 自动启动。
+            暂不自动禁用聚好看或海信原厂桌面。
