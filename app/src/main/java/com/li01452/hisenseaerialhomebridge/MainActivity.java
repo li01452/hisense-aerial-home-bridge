@@ -47,13 +47,15 @@ public final class MainActivity extends Activity {
                 LinearLayout.LayoutParams.WRAP_CONTENT));
 
         Button testButton = new Button(this);
-        testButton.setText("测试 Logo 遮罩");
+        testButton.setText("测试 Logo 覆盖层");
         testButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                Intent test = new Intent(MainActivity.this, LogoActivity.class);
-                test.putExtra(LogoActivity.EXTRA_AUTO_LAUNCH, false);
-                startActivity(test);
+                Intent test = new Intent(MainActivity.this, BootCoverService.class);
+                test.putExtra(BootCoverService.EXTRA_ACTION, "MANUAL_TEST");
+                test.putExtra(BootCoverService.EXTRA_LAUNCH_AERIAL, false);
+                test.putExtra(BootCoverService.EXTRA_MANUAL_TEST, true);
+                startService(test);
             }
         });
         root.addView(testButton, buttonLayout());
